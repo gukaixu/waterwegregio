@@ -1,0 +1,11 @@
+<svg width="280" height="70" viewBox="0 0 280 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- REGIODEAL text -->
+  <text x="10" y="25" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="white" letter-spacing="1">REGIODEAL</text>
+  
+  <!-- WATERWEGREGIO text -->
+  <text x="10" y="50" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="white" letter-spacing="0.5">WATERWEGREGIO</text>
+  
+  <!-- Wave decoration -->
+  <path d="M10 60 Q 20 57, 30 60 T 50 60 T 70 60 T 90 60 T 110 60" stroke="#4A9FD8" stroke-width="2" fill="none"/>
+</svg>
+
