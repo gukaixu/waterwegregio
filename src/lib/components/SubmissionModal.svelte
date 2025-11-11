@@ -112,7 +112,7 @@
 									on:click={() => selectedType = key}
 									disabled={isSubmitting}
 								>
-									<span class="type-icon">{type.icon}</span>
+									<img src={type.icon} alt={type.label} class="type-icon-img" />
 									<span class="type-label">{type.label}</span>
 								</button>
 							{/each}
@@ -311,8 +311,26 @@
 		cursor: not-allowed;
 	}
 
-	.type-icon {
-		font-size: 24px;
+	.type-icon-img {
+		width: auto;
+		height: 40px;
+		object-fit: contain;
+		/* Navy color filter */
+		filter: brightness(0) saturate(100%) invert(28%) sepia(65%) saturate(1234%) hue-rotate(186deg) brightness(93%) contrast(88%);
+		transition: transform 0.2s ease, filter 0.2s ease;
+	}
+	
+	/* Toned down orange project puzzle piece */
+	.type-option.project .type-icon-img {
+		filter: brightness(0) saturate(100%) invert(55%) sepia(85%) saturate(2200%) hue-rotate(1deg) brightness(95%) contrast(98%) !important;
+	}
+	
+	.type-option:hover .type-icon-img {
+		transform: scale(1.1);
+	}
+	
+	.type-option.project:hover .type-icon-img {
+		filter: saturate(1.7) brightness(1.25) contrast(1.15) !important;
 	}
 
 	.type-label {

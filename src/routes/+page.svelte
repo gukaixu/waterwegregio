@@ -73,16 +73,17 @@
 	<meta name="description" content="Deel je verhalen, ervaringen en herinneringen uit de Waterwegregio" />
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Fredoka:wght@600&display=swap" rel="stylesheet">
 </svelte:head>
 
 <div class="app">
 	<main class="main-content">
 		<Map bind:this={mapComponent} {stories} on:mapclick={handleMapClick} on:outsideboundary={handleOutsideBoundary} />
 
-		<!-- Simple centered title -->
+		<!-- Title with Monster logo -->
 		<div class="map-title">
-			<h1>WATERWEGREGIO VERHALENKAART</h1>
+			<img src="/monster-logo.png" alt="Monster Logo" class="monster-logo" />
+			<h1>Waterwegregio Verhalenkaart</h1>
 		</div>
 
 		{#if showInstructions}
@@ -132,25 +133,37 @@
 
 	.map-title {
 		position: absolute;
-		top: 30px;
+		top: 20px;
 		left: 50%;
 		transform: translateX(-50%);
 		z-index: 10;
 		pointer-events: none;
+		display: flex;
+		align-items: center;
+		gap: 16px;
+	}
+
+	.monster-logo {
+		width: auto;
+		height: 50px;
+		object-fit: contain;
+		/* Darker navy color filter - toned down */
+		filter: brightness(0) saturate(100%) invert(22%) sepia(55%) saturate(900%) hue-rotate(186deg) brightness(80%) contrast(85%) drop-shadow(0 2px 6px rgba(255, 255, 255, 0.9));
 	}
 
 	.map-title h1 {
 		margin: 0;
-		font-size: 32px;
+		font-size: 42px;
 		font-weight: 700;
-		font-family: 'Roboto Condensed', sans-serif;
+		font-family: 'Caveat', cursive;
 		color: #1e5a8e;
-		text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.9),
-		             -1px -1px 2px rgba(255, 255, 255, 0.9),
-		             1px -1px 2px rgba(255, 255, 255, 0.9),
-		             -1px 1px 2px rgba(255, 255, 255, 0.9);
+		text-shadow: 3px 3px 0px rgba(255, 255, 255, 0.95),
+		             -2px -2px 0px rgba(255, 255, 255, 0.95),
+		             2px -2px 0px rgba(255, 255, 255, 0.95),
+		             -2px 2px 0px rgba(255, 255, 255, 0.95),
+		             0 4px 8px rgba(255, 255, 255, 0.7);
 		white-space: nowrap;
-		letter-spacing: 1px;
+		letter-spacing: 0.5px;
 	}
 
 	.instructions {

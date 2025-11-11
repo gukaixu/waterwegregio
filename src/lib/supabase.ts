@@ -37,31 +37,31 @@ export interface StoryWithCoords {
 export const storyTypes = {
 	project: {
 		label: 'Regiodeal Project',
-		icon: '🎯',
+		icon: '/icons/projectpuzzelstuk.PNG',
 		color: '#dc2626', // Red - stands out
 		description: 'Officieel Regiodeal Waterwegregio project'
 	},
 	bewoner: {
 		label: 'Verhaal Bewoner',
-		icon: '💬',
+		icon: '/icons/bewonersverhaal.PNG',
 		color: '#1e5a8e', // Blue
 		description: 'Persoonlijk verhaal of ervaring van een bewoner'
 	},
 	initiatief: {
 		label: 'Lokaal Initiatief',
-		icon: '🌟',
+		icon: '/icons/lokaalinitiatief.PNG',
 		color: '#059669', // Green
 		description: 'Burgerinitiatief of lokaal project'
 	},
 	vraag: {
 		label: 'Vraag of Behoefte',
-		icon: '❓',
+		icon: '/icons/vraag.PNG',
 		color: '#ea580c', // Orange
 		description: 'Vraag, wens of behoefte uit de buurt'
 	},
 	idee: {
 		label: 'Idee',
-		icon: '💡',
+		icon: '/icons/Idee.PNG',
 		color: '#7c3aed', // Purple
 		description: 'Nieuw idee of voorstel voor de regio'
 	}

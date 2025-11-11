@@ -15,6 +15,7 @@
 	let tempMarker: maplibregl.Marker | null = null;
 	let storiesLayerAdded = false;
 	let storyMarkers: maplibregl.Marker[] = [];
+	let currentPopup: maplibregl.Popup | null = null;
 
 	// Reactive statement to update stories when they change
 	$: if (map && stories.length > 0 && storiesLayerAdded) {
@@ -23,7 +24,7 @@
 
 	onMount(async () => {
 		// Load custom Maputnik style
-		const styleResponse = await fetch('/map-style.json');
+		const styleResponse = await fetch('/map-style-2.json');
 		const customStyle = await styleResponse.json();
 
 		// Initialize map with custom style
@@ -207,15 +208,16 @@
 			const el = document.createElement('div');
 			el.className = 'story-marker-wrapper';
 			
-			// Create inner element for the emoji
-			const icon = document.createElement('div');
-			icon.className = 'story-marker-icon';
-			icon.innerHTML = typeConfig.icon;
-			icon.style.fontSize = story.type === 'project' ? '48px' : '36px';
-			
-			el.appendChild(icon);
+		// Create img element for the icon
+		const icon = document.createElement('img');
+		icon.className = story.type === 'project' ? 'story-marker-icon project-icon' : 'story-marker-icon';
+		icon.src = typeConfig.icon;
+		icon.alt = typeConfig.label;
+		// Don't set inline width/height - let CSS handle it for aspect ratio preservation
+		
+		el.appendChild(icon);
 
-			// Create marker with anchor at center-bottom
+			// Create marker with anchor at center
 			const marker = new maplibregl.Marker({ 
 				element: el,
 				anchor: 'center'
@@ -227,41 +229,58 @@
 			el.addEventListener('click', (e) => {
 				e.stopPropagation();
 				const created = story.created_at
-					? new Date(story.created_at).toLocaleDateString('nl-NL')
+					? new Date(story.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
 					: '';
 
 				let popupHTML = `
 					<div class="popup-content">
 						<div class="popup-header">
-							<span class="popup-icon">${typeConfig.icon}</span>
+							<img src="${typeConfig.icon}" alt="${escapeHtml(typeConfig.label)}" class="popup-icon-img" />
 							<span class="popup-type">${escapeHtml(typeConfig.label)}</span>
 						</div>
 						<p class="popup-text">${escapeHtml(story.text)}</p>
 				`;
 
+				// Add optional fields in a cleaner format
+				const metaFields = [];
 				if (story.organisatie) {
-					popupHTML += `<p class="popup-meta"><strong>Organisatie:</strong> ${escapeHtml(story.organisatie)}</p>`;
+					metaFields.push(`<div class="popup-meta-item"><span class="popup-meta-label">Organisatie</span><span class="popup-meta-value">${escapeHtml(story.organisatie)}</span></div>`);
 				}
 				if (story.naam) {
-					popupHTML += `<p class="popup-meta"><strong>Naam:</strong> ${escapeHtml(story.naam)}</p>`;
+					metaFields.push(`<div class="popup-meta-item"><span class="popup-meta-label">Naam</span><span class="popup-meta-value">${escapeHtml(story.naam)}</span></div>`);
 				}
 				if (story.link) {
 					const fullUrl = story.link.startsWith('http://') || story.link.startsWith('https://') 
 						? story.link 
 						: 'https://' + story.link;
-					popupHTML += `<p class="popup-meta"><strong>Link:</strong> <a href="${escapeHtml(fullUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(story.link)}</a></p>`;
+					metaFields.push(`<div class="popup-meta-item"><span class="popup-meta-label">Link</span><a href="${escapeHtml(fullUrl)}" target="_blank" rel="noopener noreferrer" class="popup-meta-link">${escapeHtml(story.link)}</a></div>`);
+				}
+
+				if (metaFields.length > 0) {
+					popupHTML += `<div class="popup-meta-section">${metaFields.join('')}</div>`;
 				}
 
 				if (created) {
-					popupHTML += `<small style="color: #9ca3af; font-size: 12px;">${created}</small>`;
+					popupHTML += `<div class="popup-date">📅 ${created}</div>`;
 				}
 
 				popupHTML += `</div>`;
 
-				new maplibregl.Popup({ offset: 25 })
+				// Close any existing popup before opening a new one
+				if (currentPopup) {
+					currentPopup.remove();
+				}
+
+				// Create and store the new popup
+				currentPopup = new maplibregl.Popup({ offset: 25 })
 					.setLngLat([story.lng, story.lat])
 					.setHTML(popupHTML)
 					.addTo(map);
+				
+				// Clear the reference when popup is closed
+				currentPopup.on('close', () => {
+					currentPopup = null;
+				});
 			});
 
 			storyMarkers.push(marker);
@@ -353,6 +372,12 @@
 
 	// Show location confirmation with temporary marker
 	function showLocationConfirmation(lng: number, lat: number) {
+		// Close any existing popup
+		if (currentPopup) {
+			currentPopup.remove();
+			currentPopup = null;
+		}
+
 		// Remove any existing temporary marker
 		if (tempMarker) {
 			tempMarker.remove();
@@ -419,67 +444,124 @@
 	}
 
 	:global(.maplibregl-popup-content) {
-		padding: 12px;
-		border-radius: 8px;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-		min-width: 200px;
+		padding: 0;
+		border-radius: 12px;
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08);
+		min-width: 260px;
+		max-width: 320px;
+		overflow: hidden;
+		border: 2px solid #f3f4f6;
 	}
 
 	:global(.maplibregl-popup-close-button) {
-		font-size: 20px;
-		padding: 4px 8px;
+		font-size: 22px;
+		padding: 8px 12px;
+		color: #6b7280;
+		transition: color 0.2s ease;
+		background: transparent;
+		position: absolute;
+		right: 8px;
+		top: 8px;
+		z-index: 10;
+	}
+
+	:global(.maplibregl-popup-close-button:hover) {
+		color: #1e5a8e;
 	}
 
 	:global(.popup-content) {
 		font-family: system-ui, -apple-system, sans-serif;
+		padding: 20px;
 	}
 
 	:global(.popup-header) {
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		margin-bottom: 8px;
-		padding-bottom: 8px;
-		border-bottom: 1px solid #e5e7eb;
+		gap: 10px;
+		margin-bottom: 14px;
+		padding-bottom: 12px;
+		border-bottom: 2px solid #e5e7eb;
 	}
 
-	:global(.popup-icon) {
-		font-size: 20px;
+	:global(.popup-icon-img) {
+		width: auto;
+		height: 28px;
+		object-fit: contain;
+		/* Navy color filter */
+		filter: brightness(0) saturate(100%) invert(28%) sepia(65%) saturate(1234%) hue-rotate(186deg) brightness(93%) contrast(88%);
+	}
+	
+	/* Toned down orange project puzzle in popup */
+	:global(.popup-icon-img[src*="projectpuzzelstuk"]) {
+		filter: brightness(0) saturate(100%) invert(55%) sepia(85%) saturate(2200%) hue-rotate(1deg) brightness(95%) contrast(98%) !important;
 	}
 
 	:global(.popup-type) {
-		font-weight: 600;
-		font-size: 13px;
-		color: #374151;
+		font-weight: 700;
+		font-size: 14px;
+		color: #1e5a8e;
+		letter-spacing: 0.3px;
 	}
 
 	:global(.popup-text) {
-		margin: 0 0 8px 0;
-		font-size: 14px;
-		line-height: 1.5;
-		color: #4b5563;
-	}
-
-	:global(.popup-meta) {
-		margin: 4px 0;
-		font-size: 13px;
-		line-height: 1.4;
-		color: #6b7280;
-	}
-
-	:global(.popup-meta strong) {
+		margin: 0 0 12px 0;
+		font-size: 15px;
+		line-height: 1.6;
 		color: #374151;
+		font-weight: 400;
+	}
+
+	:global(.popup-meta-section) {
+		background: #f9fafb;
+		padding: 12px;
+		border-radius: 8px;
+		margin-bottom: 12px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	:global(.popup-meta-item) {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	:global(.popup-meta-label) {
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		color: #6b7280;
 		font-weight: 600;
 	}
 
-	:global(.popup-meta a) {
-		color: #1e5a8e;
-		text-decoration: none;
-		word-break: break-all;
+	:global(.popup-meta-value) {
+		font-size: 14px;
+		color: #374151;
+		font-weight: 500;
 	}
 
-	:global(.popup-meta a:hover) {
+	:global(.popup-meta-link) {
+		color: #1e5a8e;
+		text-decoration: none;
+		font-size: 14px;
+		font-weight: 500;
+		word-break: break-word;
+		transition: color 0.2s ease;
+	}
+
+	:global(.popup-meta-link:hover) {
+		color: #2563eb;
 		text-decoration: underline;
+	}
+
+	:global(.popup-date) {
+		font-size: 12px;
+		color: #9ca3af;
+		text-align: center;
+		padding-top: 8px;
+		border-top: 1px solid #e5e7eb;
+		margin-top: 4px;
 	}
 
 	:global(.temp-marker) {
@@ -540,14 +622,24 @@
 	}
 
 	:global(.story-marker-icon) {
-		text-shadow: 0 0 3px white, 0 0 5px white;
+		display: block;
+		width: auto;
+		height: 56px; /* Larger size */
+		object-fit: contain; /* Preserve aspect ratio */
 		transition: transform 0.2s ease;
 		transform-origin: center center;
-		line-height: 1;
+		/* Navy color filter + white glow for visibility */
+		filter: brightness(0) saturate(100%) invert(28%) sepia(65%) saturate(1234%) hue-rotate(186deg) brightness(93%) contrast(88%) drop-shadow(0 0 3px white) drop-shadow(0 0 6px white);
+	}
+	
+	:global(.story-marker-icon.project-icon) {
+		height: 72px; /* Even larger for project pins */
+		/* Toned down orange puzzle piece */
+		filter: brightness(0) saturate(100%) invert(55%) sepia(85%) saturate(2200%) hue-rotate(1deg) brightness(95%) contrast(98%) drop-shadow(0 0 4px white) drop-shadow(0 0 6px rgba(255, 140, 0, 0.4)) !important;
 	}
 
 	:global(.story-marker-wrapper:hover .story-marker-icon) {
-		transform: scale(1.3);
+		transform: scale(1.2);
 	}
 </style>
 

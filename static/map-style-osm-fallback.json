@@ -1,0 +1,36 @@
+{
+  "version": 8,
+  "name": "Waterwegregio Custom Style - OSM",
+  "metadata": {"maputnik:renderer": "mlgljs"},
+  "sources": {
+    "osm-raster": {
+      "type": "raster",
+      "tiles": [
+        "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+      ],
+      "tileSize": 256,
+      "attribution": "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+    }
+  },
+  "glyphs": "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {"background-color": "#f7c89e"}
+    },
+    {
+      "id": "osm-tiles",
+      "type": "raster",
+      "source": "osm-raster",
+      "paint": {
+        "raster-opacity": 0.85,
+        "raster-hue-rotate": 10,
+        "raster-saturation": 0.2,
+        "raster-contrast": 0.15,
+        "raster-brightness-min": 0.25,
+        "raster-brightness-max": 0.92
+      }
+    }
+  ]
+}

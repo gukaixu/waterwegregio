@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { supabase } from '$lib/supabase';
+	import { supabase, storyTypes } from '$lib/supabase';
 	import type { StoryWithCoords } from '$lib/supabase';
 
 	let isAuthenticated = false;
@@ -179,7 +179,7 @@
 								<div class="story-header">
 									<div class="story-meta">
 										<span class="type-badge">
-											{#if story.type === 'project'}🎯{:else if story.type === 'bewoner'}💬{:else if story.type === 'initiatief'}🌟{:else if story.type === 'vraag'}❓{:else if story.type === 'idee'}💡{/if}
+											<img src={storyTypes[story.type]?.icon || storyTypes.bewoner.icon} alt={story.type} class="type-icon-small" />
 											{story.type}
 										</span>
 										<span class="date">
@@ -442,6 +442,22 @@
 		background: #f3f4f6;
 		color: #374151;
 		text-transform: capitalize;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	.type-icon-small {
+		width: auto;
+		height: 20px;
+		object-fit: contain;
+		/* Navy color filter */
+		filter: brightness(0) saturate(100%) invert(28%) sepia(65%) saturate(1234%) hue-rotate(186deg) brightness(93%) contrast(88%);
+	}
+	
+	/* Toned down orange project puzzle piece */
+	.type-icon-small[src*="projectpuzzelstuk"] {
+		filter: brightness(0) saturate(100%) invert(55%) sepia(85%) saturate(2200%) hue-rotate(1deg) brightness(95%) contrast(98%) !important;
 	}
 
 	.date {
