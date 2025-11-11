@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waterwegregio Verhalen Kaart</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: #ffffff;
+            color: #1a1a1a;
+            padding: 24px 0;
+            border-bottom: 1px solid #e5e5e5;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        header h1 {
+            font-size: 1.75rem;
+            margin-bottom: 4px;
+            font-weight: 600;
+            color: #1a1a1a;
+            letter-spacing: -0.02em;
+        }
+
+        header p {
+            font-size: 0.95rem;
+            color: #666;
+            font-weight: 400;
+        }
+
+        main {
+            padding: 0;
+        }
+
+        #map {
+            height: calc(100vh - 200px);
+            width: 100%;
+            min-height: 500px;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 0;
+            overflow: hidden;
+            border: 1px solid #e5e5e5;
+            background: white;
+        }
+
+        .leaflet-popup-tip {
+            border: 1px solid #e5e5e5;
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+            width: 350px !important;
+            max-width: 90vw;
+        }
+
+        .popup-content {
+            padding: 20px;
+        }
+
+        .popup-header {
+            background: #f8f8f8;
+            color: #1a1a1a;
+            padding: 16px 20px;
+            margin: -20px -20px 16px -20px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .popup-header h3 {
+            font-size: 1.25rem;
+            margin-bottom: 4px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .popup-location {
+            font-size: 0.875rem;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 400;
+        }
+
+        .popup-location::before {
+            content: "•";
+            color: #999;
+        }
+
+        .popup-description {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            color: #555;
+            white-space: pre-wrap;
+        }
+
+        .custom-marker {
+            background: white;
+            border: 2px solid #333;
+            border-radius: 50% 50% 50% 0;
+            width: 36px;
+            height: 36px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            transform: rotate(-45deg);
+        }
+
+        .custom-marker > * {
+            transform: rotate(45deg);
+        }
+
+        .custom-marker:hover {
+            transform: rotate(-45deg) scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+
+        .marker-story { 
+            border-color: #e74c3c;
+            background: #ffe5e5;
+        }
+
+        .marker-photo { 
+            border-color: #f39c12;
+            background: #fff4e5;
+        }
+
+        .marker-video { 
+            border-color: #3498db;
+            background: #e5f4ff;
+        }
+
+        .marker-event { 
+            border-color: #9b59b6;
+            background: #f3e5ff;
+        }
+
+        .marker-place { 
+            border-color: #2c3e50;
+            background: #e8eaed;
+        }
+
+        .marker-nature { 
+            border-color: #27ae60;
+            background: #e5ffe5;
+        }
+
+        footer {
+            background: white;
+            color: #666;
+            text-align: center;
+            padding: 16px 0;
+            margin-top: auto;
+            border-top: 1px solid #e5e5e5;
+        }
+
+        footer p {
+            font-size: 0.875rem;
+            font-weight: 400;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Waterwegregio Verhalen Kaart</h1>
+            <p>Ontdek verhalen, foto's en video's uit de Waterwegregio</p>
+        </div>
+    </header>
+
+    <main>
+        <div id="map"></div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Waterwegregio | Erasmus Universiteit Rotterdam</p>
+        </div>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // Sample pins data
+        const pinsData = [
+            {
+                "id": "pin_sample_1",
+                "type": "story",
+                "lat": 51.8639,
+                "lng": 4.3511,
+                "title": "Verhaal uit Hoogvliet",
+                "location": "Hoogvliet",
+                "description": "Dit is een voorbeeldverhaal uit Hoogvliet. Hier kan een uitgebreid verhaal komen over de wijk, de mensen, ontwikkelingen, of specifieke projecten.",
+                "images": [],
+                "videos": [],
+                "created": "2025-10-28T10:00:00.000Z"
+            },
+            {
+                "id": "pin_sample_2",
+                "type": "video",
+                "lat": 51.9225,
+                "lng": 4.4792,
+                "title": "Haven Innovatie Project",
+                "location": "Rotterdam Haven",
+                "description": "Een innovatief project in de Rotterdamse haven dat de toekomst van duurzame scheepvaart onderzoekt.",
+                "images": [],
+                "videos": [],
+                "created": "2025-10-27T14:30:00.000Z"
+            },
+            {
+                "id": "pin_sample_3",
+                "type": "nature",
+                "lat": 51.8892,
+                "lng": 4.2936,
+                "title": "Gemeenschapstuin Pernis",
+                "location": "Pernis",
+                "description": "Bewoners van Pernis hebben samen een gemeenschapstuin opgezet waar buurtbewoners elkaar ontmoeten en verse groenten verbouwen.",
+                "images": [],
+                "videos": [],
+                "created": "2025-10-25T09:15:00.000Z"
+            }
+        ];
+
+        let map;
+        let markers = [];
+        let boundaryLayer;
+
+        // Initialize the map
+        function initMap() {
+            map = L.map('map', {
+                zoomControl: true,
+                scrollWheelZoom: true
+            }).setView([51.90, 4.40], 11);
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                maxZoom: 19
+            }).addTo(map);
+
+            loadBoundary();
+            loadAndDisplayPins();
+        }
+
+        // Load Waterwegregio boundary
+        async function loadBoundary() {
+            try {
+                const response = await fetch('data/waterwegregio_boundary.geojson');
+                if (response.ok) {
+                    const geojson = await response.json();
+                    
+                    boundaryLayer = L.geoJSON(geojson, {
+                        style: {
+                            color: '#0066cc',
+                            weight: 3,
+                            opacity: 0.8,
+                            fillColor: '#0066cc',
+                            fillOpacity: 0.05,
+                            dashArray: '8, 4'
+                        }
+                    }).addTo(map);
+                    
+                    map.fitBounds(boundaryLayer.getBounds(), { padding: [30, 30] });
+                } else {
+                    console.log('Boundary file not found, continuing without it');
+                }
+            } catch (error) {
+                console.log('Could not load boundary:', error);
+            }
+        }
+
+        // Load pins and display on map
+        function loadAndDisplayPins() {
+            markers.forEach(marker => marker.remove());
+            markers = [];
+
+            pinsData.forEach(pin => {
+                addMarkerToMap(pin);
+            });
+
+            if (pinsData.length > 0 && !boundaryLayer) {
+                const bounds = L.latLngBounds(pinsData.map(pin => [pin.lat, pin.lng]));
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+
+        // Get icon for pin type
+        function getIconForType(type) {
+            const icons = {
+                'story': '📖',
+                'photo': '📷',
+                'video': '🎥',
+                'event': '🎉',
+                'place': '🏛️',
+                'nature': '🌳'
+            };
+            return icons[type] || '📌';
+        }
+
+        // Add a marker to the map
+        function addMarkerToMap(pin) {
+            const pinType = pin.type || 'story';
+            const iconEmoji = getIconForType(pinType);
+            
+            const icon = L.divIcon({
+                className: `custom-marker marker-${pinType}`,
+                html: iconEmoji,
+                iconSize: [36, 36],
+                iconAnchor: [18, 36],
+                popupAnchor: [0, -36]
+            });
+
+            const marker = L.marker([pin.lat, pin.lng], { icon: icon });
+            const popupContent = createPopupContent(pin);
+
+            marker.bindPopup(popupContent, {
+                maxWidth: 400,
+                className: 'custom-popup'
+            });
+
+            marker.addTo(map);
+            markers.push(marker);
+        }
+
+        // Create popup content HTML
+        function createPopupContent(pin) {
+            let html = '<div class="popup-content">';
+            
+            html += '<div class="popup-header">';
+            html += `<h3>${escapeHtml(pin.title)}</h3>`;
+            if (pin.location) {
+                html += `<div class="popup-location">${escapeHtml(pin.location)}</div>`;
+            }
+            html += '</div>';
+
+            if (pin.description) {
+                html += `<div class="popup-description">${escapeHtml(pin.description)}</div>`;
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Initialize map when page loads
+        document.addEventListener('DOMContentLoaded', initMap);
+    </script>
+</body>
+</html>
+

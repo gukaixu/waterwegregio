@@ -1,0 +1,52 @@
+{
+  "pins": [
+    {
+      "id": "pin_sample_1",
+      "type": "story",
+      "lat": 51.8639,
+      "lng": 4.3511,
+      "title": "Verhaal uit Hoogvliet",
+      "location": "Hoogvliet",
+      "description": "Dit is een voorbeeldverhaal uit Hoogvliet. Hier kan een uitgebreid verhaal komen over de wijk, de mensen, ontwikkelingen, of specifieke projecten.\n\nDit veld ondersteunt meerdere paragrafen en uitgebreide beschrijvingen.",
+      "images": [
+        "https://picsum.photos/600/400?random=1",
+        "https://picsum.photos/600/400?random=2"
+      ],
+      "videos": [],
+      "created": "2025-10-28T10:00:00.000Z"
+    },
+    {
+      "id": "pin_sample_2",
+      "type": "video",
+      "lat": 51.9225,
+      "lng": 4.4792,
+      "title": "Haven Innovatie Project",
+      "location": "Rotterdam Haven",
+      "description": "Een innovatief project in de Rotterdamse haven dat de toekomst van duurzame scheepvaart onderzoekt.\n\nDit project brengt bedrijven, onderzoekers en bewoners samen om samen te werken aan een groenere haven.",
+      "images": [
+        "https://picsum.photos/600/400?random=3"
+      ],
+      "videos": [
+        "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+      ],
+      "created": "2025-10-27T14:30:00.000Z"
+    },
+    {
+      "id": "pin_sample_3",
+      "type": "nature",
+      "lat": 51.8892,
+      "lng": 4.2936,
+      "title": "Gemeenschapstuin Pernis",
+      "location": "Pernis",
+      "description": "Bewoners van Pernis hebben samen een gemeenschapstuin opgezet waar buurtbewoners elkaar ontmoeten en verse groenten verbouwen.\n\nDeze tuin is een mooi voorbeeld van hoe een gemeenschap samenwerkt aan een groenere en sociaal sterkere buurt.",
+      "images": [
+        "https://picsum.photos/600/400?random=4",
+        "https://picsum.photos/600/400?random=5",
+        "https://picsum.photos/600/400?random=6"
+      ],
+      "videos": [],
+      "created": "2025-10-25T09:15:00.000Z"
+    }
+  ]
+}
+

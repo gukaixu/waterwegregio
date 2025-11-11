@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beheer - Waterwegregio Verhalen Kaart</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-box">
+            <h2>Admin Toegang</h2>
+            <p>Voer het wachtwoord in om verhalen te beheren</p>
+            <input type="password" id="password-input" placeholder="Wachtwoord">
+            <button onclick="login()">Inloggen</button>
+            <p class="error-message" id="error-message"></p>
+            <a href="index.html" class="back-link">← Terug naar kaart</a>
+        </div>
+    </div>
+
+    <!-- Admin Interface -->
+    <div id="admin-interface" style="display: none;">
+        <header>
+            <div class="container">
+                <h1>Verhalen Beheren</h1>
+                <div class="header-actions">
+                    <button onclick="exportData()" class="btn-export">Exporteer Data</button>
+                    <a href="index.html" class="btn-view">Bekijk Kaart</a>
+                </div>
+            </div>
+        </header>
+
+        <main class="admin-main">
+            <div class="container">
+                <div class="admin-layout">
+                    <!-- Map Section -->
+                    <div class="map-section">
+                        <h2>Klik op de kaart om een locatie te selecteren</h2>
+                        <div id="admin-map"></div>
+                        <p class="selected-coords" id="selected-coords">Geen locatie geselecteerd</p>
+                    </div>
+
+                    <!-- Form Section -->
+                    <div class="form-section">
+                        <h2 id="form-title">Nieuw Verhaal Toevoegen</h2>
+                        <form id="pin-form">
+                            <input type="hidden" id="pin-id">
+                            <input type="hidden" id="pin-lat">
+                            <input type="hidden" id="pin-lng">
+
+                            <div class="form-group">
+                                <label for="pin-type">Type Pin</label>
+                                <select id="pin-type">
+                                    <option value="story">Verhaal</option>
+                                    <option value="photo">Foto</option>
+                                    <option value="video">Video</option>
+                                    <option value="event">Evenement</option>
+                                    <option value="place">Locatie</option>
+                                    <option value="nature">Natuur</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="pin-title">Titel *</label>
+                                <input type="text" id="pin-title" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="pin-location">Locatie Naam</label>
+                                <input type="text" id="pin-location" placeholder="Bijv. Hoogvliet, Pernis, etc.">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="pin-description">Verhaal / Beschrijving *</label>
+                                <textarea id="pin-description" rows="6" required></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="pin-images">Foto URLs (één per regel)</label>
+                                <textarea id="pin-images" rows="3" placeholder="https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="pin-videos">Video URLs (YouTube of Vimeo, één per regel)</label>
+                                <textarea id="pin-videos" rows="2" placeholder="https://www.youtube.com/watch?v=VIDEO_ID"></textarea>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">Opslaan</button>
+                                <button type="button" onclick="resetForm()" class="btn-secondary">Annuleren</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Pins List Section -->
+                <div class="pins-list-section">
+                    <h2>Bestaande Verhalen (<span id="pins-count">0</span>)</h2>
+                    <div id="pins-list" class="pins-list"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="js/data.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
+
