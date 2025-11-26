@@ -106,6 +106,11 @@
 				<p>⚠️ Je kunt alleen verhalen plaatsen binnen de Waterwegregio (het blauwe gebied)</p>
 			</div>
 		{/if}
+
+		<!-- Regiodeal Waterwegregio Logo -->
+		<a href="https://www.regiodealwaterwegregio.nl" target="_blank" rel="noopener noreferrer" class="regiodeal-logo-link">
+			<img src="/wwr-logo.jpeg" alt="Regiodeal Waterwegregio" class="regiodeal-logo" />
+		</a>
 	</main>
 
 	<SubmissionModal
@@ -236,6 +241,30 @@
 		font-weight: 500;
 	}
 
+	.regiodeal-logo-link {
+		position: absolute;
+		bottom: 20px;
+		left: 20px;
+		z-index: 10;
+		transition: transform 0.3s ease, opacity 0.3s ease;
+		opacity: 0.9;
+	}
+
+	.regiodeal-logo-link:hover {
+		transform: scale(1.05);
+		opacity: 1;
+	}
+
+	.regiodeal-logo {
+		height: 90px;
+		width: auto;
+		object-fit: contain;
+		border-radius: 8px;
+		background: white;
+		padding: 10px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	}
+
 	@media (max-width: 768px) {
 		.map-title {
 			top: 20px;
@@ -263,6 +292,16 @@
 
 		.boundary-warning p {
 			font-size: 13px;
+		}
+
+		.regiodeal-logo-link {
+			bottom: 80px;
+			left: 10px;
+		}
+
+		.regiodeal-logo {
+			height: 60px;
+			padding: 8px;
 		}
 	}
 </style>
