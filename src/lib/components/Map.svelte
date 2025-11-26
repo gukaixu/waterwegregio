@@ -765,7 +765,9 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		position: relative;
+		position: absolute;
+		top: 0;
+		left: 0;
 		width: 56px;
 		height: 56px;
 	}
