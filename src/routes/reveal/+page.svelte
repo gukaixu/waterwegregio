@@ -29,6 +29,29 @@
 		}
 	}
 
+	function openCurtains() {
+		stage = 'opening';
+		
+		// Animate curtain progress
+		const duration = 2000;
+		const start = Date.now();
+		
+		function animate() {
+			const elapsed = Date.now() - start;
+			curtainProgress = Math.min(elapsed / duration, 1);
+			
+			if (curtainProgress < 1) {
+				requestAnimationFrame(animate);
+			} else {
+				stage = 'revealed';
+				showTitle = true;
+				launchConfetti();
+			}
+		}
+		
+		requestAnimationFrame(animate);
+	}
+
 	function reset() {
 		stage = 'waiting';
 		countdown = 5;
