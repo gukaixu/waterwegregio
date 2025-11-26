@@ -303,8 +303,8 @@
 
 	.admin-toggle {
 		position: absolute;
-		top: 20px;
-		right: 70px;
+		bottom: 20px;
+		right: 20px;
 		z-index: 10;
 		background: white;
 		border: 2px solid #e5e7eb;
@@ -333,8 +333,8 @@
 
 	.admin-panel-link {
 		position: absolute;
-		top: 20px;
-		right: 120px;
+		bottom: 20px;
+		right: 70px;
 		z-index: 10;
 		background: white;
 		border: 2px solid #e5e7eb;
@@ -397,7 +397,7 @@
 		}
 
 		.admin-toggle {
-			top: 10px;
+			bottom: 80px;
 			right: 10px;
 			width: 36px;
 			height: 36px;
@@ -405,8 +405,8 @@
 		}
 
 		.admin-panel-link {
-			top: 56px;
-			right: 10px;
+			bottom: 80px;
+			right: 56px;
 			width: 36px;
 			height: 36px;
 			font-size: 18px;
