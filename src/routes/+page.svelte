@@ -15,6 +15,25 @@
 	let selectedLng: number | null = null;
 	let showInstructions = true;
 	let showBoundaryWarning = false;
+	let isAdmin = false;
+
+	// Admin password (in production, use environment variable)
+	const ADMIN_PASSWORD = 'waterwegregio2024';
+
+	function toggleAdmin() {
+		if (isAdmin) {
+			isAdmin = false;
+			toastStore.show('Admin modus uitgeschakeld', 'info');
+		} else {
+			const password = prompt('Voer admin wachtwoord in:');
+			if (password === ADMIN_PASSWORD) {
+				isAdmin = true;
+				toastStore.show('Admin modus ingeschakeld', 'success');
+			} else if (password !== null) {
+				toastStore.show('Onjuist wachtwoord', 'error');
+			}
+		}
+	}
 
 	onMount(async () => {
 		await loadStories();
@@ -111,12 +130,18 @@
 		<a href="https://www.regiodealwaterwegregio.nl" target="_blank" rel="noopener noreferrer" class="regiodeal-logo-link">
 			<img src="/wwr-logo.jpeg" alt="Regiodeal Waterwegregio" class="regiodeal-logo" />
 		</a>
+
+		<!-- Admin Toggle Button -->
+		<button class="admin-toggle" on:click={toggleAdmin} class:active={isAdmin} title={isAdmin ? 'Admin modus' : 'Admin login'}>
+			🔑
+		</button>
 	</main>
 
 	<SubmissionModal
 		bind:isOpen={showModal}
 		lat={selectedLat}
 		lng={selectedLng}
+		isAdmin={isAdmin}
 		on:success={handleSubmissionSuccess}
 		on:close={() => {
 			showInstructions = false;
@@ -265,6 +290,36 @@
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 	}
 
+	.admin-toggle {
+		position: absolute;
+		top: 20px;
+		right: 70px;
+		z-index: 10;
+		background: white;
+		border: 2px solid #e5e7eb;
+		border-radius: 8px;
+		width: 40px;
+		height: 40px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 20px;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	}
+
+	.admin-toggle:hover {
+		background: #f3f4f6;
+		transform: scale(1.05);
+	}
+
+	.admin-toggle.active {
+		background: linear-gradient(135deg, #7c3aed, #dc2626);
+		border-color: transparent;
+		box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+	}
+
 	@media (max-width: 768px) {
 		.map-title {
 			top: 20px;
@@ -302,6 +357,14 @@
 		.regiodeal-logo {
 			height: 60px;
 			padding: 8px;
+		}
+
+		.admin-toggle {
+			top: 10px;
+			right: 10px;
+			width: 36px;
+			height: 36px;
+			font-size: 18px;
 		}
 	}
 </style>

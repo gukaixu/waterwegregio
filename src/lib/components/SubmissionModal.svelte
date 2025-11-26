@@ -9,6 +9,7 @@
 	export let isOpen = false;
 	export let lat: number | null = null;
 	export let lng: number | null = null;
+	export let isAdmin = false;
 
 	let text = '';
 	let selectedType: string = 'bewoner';
@@ -18,6 +19,11 @@
 	let isSubmitting = false;
 	let error = '';
 	let success = false;
+	
+	// Filter story types based on admin status
+	$: availableStoryTypes = Object.entries(storyTypes).filter(([key]) => 
+		isAdmin || key !== 'project'
+	);
 	
 	// Character counter state
 	$: charCount = text.length;
@@ -110,9 +116,12 @@
 					<div class="form-group">
 						<label for="story-type">
 							Type <span class="required">*</span>
+							{#if isAdmin}
+								<span class="admin-badge">Admin</span>
+							{/if}
 						</label>
 						<div class="type-selector">
-							{#each Object.entries(storyTypes) as [key, type]}
+							{#each availableStoryTypes as [key, type]}
 								<button
 									type="button"
 									class="type-option"
@@ -407,6 +416,19 @@
 
 	.required {
 		color: #dc2626;
+	}
+
+	.admin-badge {
+		display: inline-block;
+		padding: 2px 8px;
+		background: linear-gradient(135deg, #7c3aed, #dc2626);
+		color: white;
+		font-size: 11px;
+		font-weight: 600;
+		border-radius: 12px;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		margin-left: 8px;
 	}
 
 	.optional {
