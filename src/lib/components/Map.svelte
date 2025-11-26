@@ -527,8 +527,8 @@
 		padding: 0;
 		border-radius: 12px;
 		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-		min-width: 320px;
-		max-width: 400px;
+		min-width: 350px;
+		max-width: 500px;
 		overflow: hidden;
 		border: none;
 		border-left: 4px solid #1e5a8e; /* Default blue, will be overridden */
