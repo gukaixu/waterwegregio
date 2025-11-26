@@ -250,19 +250,18 @@
 			const el = document.createElement('div');
 			el.className = story.type === 'project' ? 'story-marker-wrapper project-wrapper' : 'story-marker-wrapper';
 			
-			// Create img element for the icon
-			const icon = document.createElement('img');
-			icon.className = story.type === 'project' ? 'story-marker-icon project-icon' : 'story-marker-icon';
-			icon.src = typeConfig.icon;
-			icon.alt = typeConfig.label;
-			
-			el.appendChild(icon);
-			
-			// Add gradient overlay for project icons
 			if (story.type === 'project') {
-				const gradientOverlay = document.createElement('div');
-				gradientOverlay.className = 'project-gradient-overlay';
-				el.appendChild(gradientOverlay);
+				// For project markers, use a simpler single-element approach
+				const gradientIcon = document.createElement('div');
+				gradientIcon.className = 'project-gradient-icon';
+				el.appendChild(gradientIcon);
+			} else {
+				// Regular markers use img element
+				const icon = document.createElement('img');
+				icon.className = 'story-marker-icon';
+				icon.src = typeConfig.icon;
+				icon.alt = typeConfig.label;
+				el.appendChild(icon);
 			}
 
 			// Create marker with anchor at center
@@ -630,12 +629,9 @@
 		line-height: 1.6;
 		color: #1f2937;
 		font-weight: 400;
-		display: -webkit-box;
-		-webkit-line-clamp: 5;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		max-height: calc(1.6em * 5); /* 5 lines * line-height */
+		max-height: 120px;
+		overflow-y: auto;
+		padding-right: 8px;
 		font-style: italic;
 		position: relative;
 		padding-left: 12px;
@@ -789,21 +785,8 @@
 		filter: brightness(0) saturate(100%) invert(35%) sepia(93%) saturate(2718%) hue-rotate(249deg) brightness(93%) contrast(93%) drop-shadow(0 0 3px white) drop-shadow(0 0 6px white);
 	}
 	
-	:global(.story-marker-icon.project-icon) {
-		width: 110px;
-		height: 110px;
-		opacity: 0;
-		filter: none !important;
-		position: absolute;
-		top: 0;
-		left: 0;
-	}
-	
-	/* Gradient overlay for project puzzle pieces */
-	:global(.project-gradient-overlay) {
-		position: absolute;
-		top: 0;
-		left: 0;
+	/* Project gradient icon - single element approach */
+	:global(.project-gradient-icon) {
 		width: 110px;
 		height: 110px;
 		background: linear-gradient(135deg, 
@@ -814,7 +797,6 @@
 			#7c3aed 100%);
 		mask: url('/icons/projectpuzzelstuk.PNG') center/contain no-repeat;
 		-webkit-mask: url('/icons/projectpuzzelstuk.PNG') center/contain no-repeat;
-		pointer-events: none;
 		filter: drop-shadow(0 0 4px white) drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
 		transition: filter 0.25s ease;
 	}
@@ -840,7 +822,7 @@
 		filter: brightness(0) saturate(100%) invert(35%) sepia(93%) saturate(2718%) hue-rotate(249deg) brightness(93%) contrast(93%) drop-shadow(0 0 4px white) drop-shadow(0 0 10px rgba(124, 58, 237, 0.5));
 	}
 	
-	:global(.story-marker-wrapper:hover .project-gradient-overlay) {
+	:global(.story-marker-wrapper:hover .project-gradient-icon) {
 		filter: drop-shadow(0 0 6px white) drop-shadow(0 0 12px rgba(255, 193, 7, 0.6)) drop-shadow(0 0 16px rgba(30, 90, 142, 0.4));
 	}
 </style>
