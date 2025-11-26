@@ -17,8 +17,8 @@
 	let storyMarkers: maplibregl.Marker[] = [];
 	let currentPopup: maplibregl.Popup | null = null;
 
-	// Reactive statement to update stories when they change
-	$: if (map && stories.length > 0 && storiesLayerAdded) {
+	// Watch for story changes and re-render markers
+	$: if (map && storiesLayerAdded && stories) {
 		renderStoryMarkers();
 	}
 
