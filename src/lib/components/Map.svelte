@@ -509,8 +509,8 @@
 		padding: 0;
 		border-radius: 12px;
 		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-		min-width: 260px;
-		max-width: 320px;
+		min-width: 320px;
+		max-width: 400px;
 		overflow: hidden;
 		border: none;
 		border-left: 4px solid #1e5a8e; /* Default blue, will be overridden */
@@ -627,9 +627,15 @@
 	:global(.popup-text) {
 		margin: 0 0 12px 0;
 		font-size: 15px;
-		line-height: 1.7;
+		line-height: 1.6;
 		color: #1f2937;
 		font-weight: 400;
+		display: -webkit-box;
+		-webkit-line-clamp: 5;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-height: calc(1.6em * 5); /* 5 lines * line-height */
 		font-style: italic;
 		position: relative;
 		padding-left: 12px;
