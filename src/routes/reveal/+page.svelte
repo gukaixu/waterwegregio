@@ -4,7 +4,7 @@
 	import { cubicOut, elasticOut } from 'svelte/easing';
 
 	let stage: 'waiting' | 'countdown' | 'opening' | 'revealed' = 'waiting';
-	let countdown = 3;
+	let countdown = 5;
 	let confettiPieces: Array<{id: number, x: number, delay: number, duration: number, color: string, size: number, rotation: number}> = [];
 	let showTitle = false;
 	let curtainProgress = 0;
@@ -29,53 +29,9 @@
 		}
 	}
 
-	function openCurtains() {
-		stage = 'opening';
-		
-		// Animate curtain progress
-		const duration = 2000;
-		const start = Date.now();
-		
-		function animate() {
-			const elapsed = Date.now() - start;
-			curtainProgress = Math.min(elapsed / duration, 1);
-			
-			if (curtainProgress < 1) {
-				requestAnimationFrame(animate);
-			} else {
-				stage = 'revealed';
-				showTitle = true;
-				launchConfetti();
-			}
-		}
-		
-		requestAnimationFrame(animate);
-	}
-
-	function launchConfetti() {
-		// Create 150 confetti pieces
-		for (let i = 0; i < 150; i++) {
-			confettiPieces.push({
-				id: i,
-				x: Math.random() * 100,
-				delay: Math.random() * 500,
-				duration: 3000 + Math.random() * 2000,
-				color: colors[Math.floor(Math.random() * colors.length)],
-				size: 8 + Math.random() * 12,
-				rotation: Math.random() * 360
-			});
-		}
-		confettiPieces = confettiPieces;
-
-		// Clear confetti after animation
-		setTimeout(() => {
-			confettiPieces = [];
-		}, 6000);
-	}
-
 	function reset() {
 		stage = 'waiting';
-		countdown = 3;
+		countdown = 5;
 		confettiPieces = [];
 		showTitle = false;
 		curtainProgress = 0;
@@ -364,15 +320,20 @@
 	}
 
 	.monster-logo {
-		width: 120px;
+		width: 150px;
 		height: auto;
 		filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
-		animation: float 3s ease-in-out infinite;
+		animation: float 4s ease-in-out infinite, glow 3s ease-in-out infinite alternate;
 	}
 
 	@keyframes float {
-		0%, 100% { transform: translateY(0); }
-		50% { transform: translateY(-15px); }
+		0%, 100% { transform: translateY(0) rotate(-2deg); }
+		50% { transform: translateY(-20px) rotate(2deg); }
+	}
+
+	@keyframes glow {
+		0% { filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3)); }
+		100% { filter: drop-shadow(0 0 25px rgba(124, 58, 237, 0.6)); }
 	}
 
 	.pre-title {
