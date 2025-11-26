@@ -99,8 +99,8 @@
       "source-layer": "roads",
       "filter": ["in", "kind", "other", "path"],
       "paint": {
-        "line-color": "#e8e8e8",
-        "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 14, 0, 20, 7]
+        "line-color": "#d9d9d9",
+        "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 14, 0, 20, 5]
       }
     },
     {
@@ -110,8 +110,8 @@
       "source-layer": "roads",
       "filter": ["==", "kind", "minor_road"],
       "paint": {
-        "line-color": "#e0d4ed",
-        "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 11, 0, 12.5, 0.5, 15, 2, 18, 11]
+        "line-color": "#d0d0d0",
+        "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 11, 0, 12.5, 0.4, 15, 1.5, 18, 8]
       }
     },
     {
@@ -121,9 +121,9 @@
       "source-layer": "roads",
       "filter": ["==", "kind", "major_road"],
       "paint": {
-        "line-color": "#d4c77d",
-        "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 7, 0, 7.5, 0.5, 18, 13],
-        "line-gap-width": ["interpolate", ["exponential", 1.6], ["zoom"], 6, 0, 12, 1.6, 15, 3, 18, 13]
+        "line-color": "#bfbfbf",
+        "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 7, 0, 7.5, 0.4, 18, 10],
+        "line-gap-width": ["interpolate", ["exponential", 1.6], ["zoom"], 6, 0, 12, 1.2, 15, 2.5, 18, 10]
       }
     },
     {
@@ -133,8 +133,8 @@
       "source-layer": "roads",
       "filter": ["==", "kind", "major_road"],
       "paint": {
-        "line-color": "#ffe761",
-        "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 6, 0, 12, 1.6, 15, 3, 18, 13]
+        "line-color": "#e0e0e0",
+        "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 6, 0, 12, 1.2, 15, 2.5, 18, 10]
       }
     },
     {
@@ -144,9 +144,9 @@
       "source-layer": "roads",
       "filter": ["==", "kind", "highway"],
       "paint": {
-        "line-color": "#ccac00",
-        "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 7, 0, 7.5, 1, 20, 15],
-        "line-gap-width": ["interpolate", ["exponential", 1.6], ["zoom"], 3, 0, 3.5, 0.5, 18, 15]
+        "line-color": "#adadad",
+        "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 7, 0, 7.5, 0.6, 20, 12],
+        "line-gap-width": ["interpolate", ["exponential", 1.6], ["zoom"], 3, 0, 3.5, 0.4, 18, 12]
       }
     },
     {
@@ -156,8 +156,8 @@
       "source-layer": "roads",
       "filter": ["==", "kind", "highway"],
       "paint": {
-        "line-color": "#ffd900",
-        "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 3, 0, 6, 1.1, 12, 1.6, 15, 5, 18, 15]
+        "line-color": "#d5d5d5",
+        "line-width": ["interpolate", ["exponential", 1.6], ["zoom"], 3, 0, 6, 1, 12, 1.4, 15, 4, 18, 12]
       }
     },
     {

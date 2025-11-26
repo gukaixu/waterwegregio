@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import { fade, scale } from 'svelte/transition';
 	import { storyTypes } from '$lib/supabase';
+	import { toastStore } from '$lib/stores/toastStore';
 
 	const dispatch = createEventDispatcher();
 
@@ -16,6 +18,11 @@
 	let isSubmitting = false;
 	let error = '';
 	let success = false;
+	
+	// Character counter state
+	$: charCount = text.length;
+	$: charPercentage = (charCount / 500) * 100;
+	$: charCounterClass = charCount >= 500 ? 'danger' : charCount >= 450 ? 'warning' : 'normal';
 
 	function close() {
 		isOpen = false;
@@ -31,17 +38,17 @@
 
 	async function handleSubmit() {
 		if (!text.trim()) {
-			error = 'Vul een verhaal in';
+			toastStore.show('Vul een verhaal in', 'error');
 			return;
 		}
 
 		if (text.length > 500) {
-			error = 'Verhaal mag maximaal 500 tekens bevatten';
+			toastStore.show('Verhaal mag maximaal 500 tekens bevatten', 'error');
 			return;
 		}
 
 		if (lat === null || lng === null) {
-			error = 'Geen locatie geselecteerd';
+			toastStore.show('Geen locatie geselecteerd', 'error');
 			return;
 		}
 
@@ -72,12 +79,14 @@
 			}
 
 			success = true;
+			toastStore.show('Je verhaal is geplaatst! 🎉', 'success');
 			setTimeout(() => {
 				dispatch('success');
 				close();
-			}, 2000);
+			}, 1500);
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'Er is een fout opgetreden';
+			const errorMessage = err instanceof Error ? err.message : 'Er is een fout opgetreden';
+			toastStore.show(errorMessage, 'error');
 		} finally {
 			isSubmitting = false;
 		}
@@ -85,8 +94,8 @@
 </script>
 
 {#if isOpen}
-	<div class="modal-backdrop" on:click={close} role="presentation">
-		<div class="modal" on:click|stopPropagation role="dialog" aria-modal="true" tabindex="-1">
+	<div class="modal-backdrop" on:click={close} role="presentation" in:fade={{ duration: 200 }} out:fade={{ duration: 150 }}>
+		<div class="modal" on:click|stopPropagation role="dialog" aria-modal="true" tabindex="-1" in:scale={{ duration: 200, start: 0.95 }} out:scale={{ duration: 150, start: 0.95 }}>
 			<div class="modal-header">
 				<h2>Deel je verhaal</h2>
 				<button class="close-button" on:click={close} aria-label="Sluiten">&times;</button>
@@ -112,7 +121,12 @@
 									on:click={() => selectedType = key}
 									disabled={isSubmitting}
 								>
-									<img src={type.icon} alt={type.label} class="type-icon-img" />
+									<div class="type-icon-wrapper">
+										<img src={type.icon} alt={type.label} class="type-icon-img" />
+										{#if key === 'project'}
+											<div class="type-icon-gradient"></div>
+										{/if}
+									</div>
 									<span class="type-label">{type.label}</span>
 								</button>
 							{/each}
@@ -123,8 +137,11 @@
 					<div class="form-group">
 						<label for="story-text">
 							Jouw verhaal <span class="required">*</span>
-							<span class="char-count">{text.length}/500</span>
+							<span class="char-count {charCounterClass}">{charCount}/500</span>
 						</label>
+						<div class="char-progress-bar">
+							<div class="char-progress-fill {charCounterClass}" style="width: {Math.min(charPercentage, 100)}%"></div>
+						</div>
 						<textarea
 							id="story-text"
 							bind:value={text}
@@ -185,8 +202,13 @@
 						<button type="button" class="btn btn-secondary" on:click={close} disabled={isSubmitting}>
 							Annuleren
 						</button>
-						<button type="submit" class="btn btn-primary" disabled={isSubmitting}>
-							{isSubmitting ? 'Bezig...' : 'Plaatsen'}
+						<button type="submit" class="btn btn-primary" disabled={isSubmitting || !text.trim()}>
+							{#if isSubmitting}
+								<span class="spinner"></span>
+								<span>Bezig...</span>
+							{:else}
+								Plaatsen
+							{/if}
 						</button>
 					</div>
 				</form>
@@ -203,6 +225,7 @@
 		right: 0;
 		bottom: 0;
 		background: rgba(0, 0, 0, 0.5);
+		backdrop-filter: blur(2px);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -311,26 +334,62 @@
 		cursor: not-allowed;
 	}
 
+	.type-icon-wrapper {
+		position: relative;
+		width: 40px;
+		height: 40px;
+		transition: transform 0.2s ease;
+	}
+	
 	.type-icon-img {
 		width: auto;
 		height: 40px;
 		object-fit: contain;
-		/* Navy color filter */
+		display: block;
+		transition: filter 0.2s ease;
+	}
+	
+	/* Color filters for each type */
+	.type-option:not(.project) .type-icon-img[alt="Verhaal Bewoner"] {
 		filter: brightness(0) saturate(100%) invert(28%) sepia(65%) saturate(1234%) hue-rotate(186deg) brightness(93%) contrast(88%);
-		transition: transform 0.2s ease, filter 0.2s ease;
 	}
 	
-	/* Toned down orange project puzzle piece */
+	.type-option:not(.project) .type-icon-img[alt="Lokaal Initiatief"] {
+		filter: brightness(0) saturate(100%) invert(38%) sepia(71%) saturate(1234%) hue-rotate(130deg) brightness(95%) contrast(96%);
+	}
+	
+	.type-option:not(.project) .type-icon-img[alt="Vraag of Behoefte"] {
+		filter: brightness(0) saturate(100%) invert(42%) sepia(95%) saturate(2413%) hue-rotate(1deg) brightness(99%) contrast(93%);
+	}
+	
+	.type-option:not(.project) .type-icon-img[alt="Idee"] {
+		filter: brightness(0) saturate(100%) invert(35%) sepia(93%) saturate(2718%) hue-rotate(249deg) brightness(93%) contrast(93%);
+	}
+	
+	/* Gradient overlay for project puzzle piece */
+	.type-icon-gradient {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 40px;
+		height: 40px;
+		background: linear-gradient(135deg, 
+			#1e5a8e 0%, 
+			#dc2626 25%, 
+			#fbbf24 50%, 
+			#059669 75%, 
+			#7c3aed 100%);
+		mask: url('/icons/projectpuzzelstuk.PNG') center/contain no-repeat;
+		-webkit-mask: url('/icons/projectpuzzelstuk.PNG') center/contain no-repeat;
+		pointer-events: none;
+	}
+	
 	.type-option.project .type-icon-img {
-		filter: brightness(0) saturate(100%) invert(55%) sepia(85%) saturate(2200%) hue-rotate(1deg) brightness(95%) contrast(98%) !important;
+		opacity: 0;
 	}
 	
-	.type-option:hover .type-icon-img {
+	.type-option:hover .type-icon-wrapper {
 		transform: scale(1.1);
-	}
-	
-	.type-option.project:hover .type-icon-img {
-		filter: saturate(1.7) brightness(1.25) contrast(1.15) !important;
 	}
 
 	.type-label {
@@ -358,9 +417,48 @@
 
 	.char-count {
 		float: right;
-		color: #6b7280;
 		font-size: 12px;
-		font-weight: 400;
+		font-weight: 500;
+		transition: color 0.3s ease;
+	}
+	
+	.char-count.normal {
+		color: #059669;
+	}
+	
+	.char-count.warning {
+		color: #ea580c;
+	}
+	
+	.char-count.danger {
+		color: #dc2626;
+		font-weight: 600;
+	}
+	
+	.char-progress-bar {
+		height: 3px;
+		background: #e5e7eb;
+		border-radius: 2px;
+		overflow: hidden;
+		margin-bottom: 8px;
+	}
+	
+	.char-progress-fill {
+		height: 100%;
+		transition: width 0.3s ease, background-color 0.3s ease;
+		border-radius: 2px;
+	}
+	
+	.char-progress-fill.normal {
+		background: linear-gradient(90deg, #059669, #10b981);
+	}
+	
+	.char-progress-fill.warning {
+		background: linear-gradient(90deg, #ea580c, #f59e0b);
+	}
+	
+	.char-progress-fill.danger {
+		background: linear-gradient(90deg, #dc2626, #ef4444);
 	}
 
 	input[type="text"],
@@ -405,7 +503,11 @@
 		font-size: 14px;
 		font-weight: 500;
 		cursor: pointer;
-		transition: all 0.2s;
+		transition: all 0.3s ease;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
 	}
 
 	.btn:disabled {

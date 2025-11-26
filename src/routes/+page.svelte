@@ -2,8 +2,10 @@
 	import { onMount } from 'svelte';
 	import Map from '$lib/components/Map.svelte';
 	import SubmissionModal from '$lib/components/SubmissionModal.svelte';
+	import Toast from '$lib/components/Toast.svelte';
 	import { supabase } from '$lib/supabase';
 	import type { StoryWithCoords } from '$lib/supabase';
+	import { toastStore } from '$lib/stores/toastStore';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 
 	let stories: StoryWithCoords[] = [];
@@ -18,8 +20,11 @@
 		await loadStories();
 	});
 
+	let isLoadingStories = true;
+	
 	async function loadStories() {
 		try {
+			isLoadingStories = true;
 			console.log('📍 Loading stories from Supabase...');
 			const { data, error } = await supabase
 				.from('stories_with_coords')
@@ -29,6 +34,7 @@
 
 			if (error) {
 				console.error('❌ Error loading stories:', error);
+				toastStore.show('Fout bij laden van verhalen', 'error');
 				return;
 			}
 
@@ -39,6 +45,9 @@
 			console.log(`✓ Total stories with valid coordinates: ${stories.length}`);
 		} catch (error) {
 			console.error('❌ Error loading stories:', error);
+			toastStore.show('Fout bij laden van verhalen', 'error');
+		} finally {
+			isLoadingStories = false;
 		}
 	}
 
@@ -73,7 +82,7 @@
 	<meta name="description" content="Deel je verhalen, ervaringen en herinneringen uit de Waterwegregio" />
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Fredoka:wght@600&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@700&family=Fredoka:wght@600&display=swap" rel="stylesheet">
 </svelte:head>
 
 <div class="app">
@@ -108,6 +117,16 @@
 			showInstructions = false;
 		}}
 	/>
+
+	<!-- Toast notifications -->
+	{#each $toastStore as toast (toast.id)}
+		<Toast
+			message={toast.message}
+			type={toast.type}
+			duration={toast.duration}
+			onClose={() => toastStore.remove(toast.id)}
+		/>
+	{/each}
 </div>
 
 <style>
@@ -155,7 +174,7 @@
 		margin: 0;
 		font-size: 42px;
 		font-weight: 700;
-		font-family: 'Caveat', cursive;
+		font-family: 'Amatic SC', cursive;
 		color: #1e5a8e;
 		text-shadow: 3px 3px 0px rgba(255, 255, 255, 0.95),
 		             -2px -2px 0px rgba(255, 255, 255, 0.95),

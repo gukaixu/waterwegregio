@@ -21,3 +21,24 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Data files
+*.xlsx
+*.xls
+*.csv
+*.gpkg
+*.pyc
+__pycache__/
+
+# Python
+*.py
+requirements.txt
+
+# Backups
+*_backup/
+backup/
+
+# Large assets
+figures_labels/
+figures/
+afweegkader/

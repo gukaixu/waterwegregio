@@ -71,6 +71,9 @@
 		map.on('load', () => {
 			// Load and add boundary
 			loadBoundary();
+			
+			// Load municipality boundaries
+			loadMunicipalityBoundaries();
 
 			// Add stories layer (even if empty, will be populated when stories load)
 			addStoriesLayer();
@@ -123,30 +126,30 @@
 				}
 			});
 
-			// Add boundary line (prominent border)
-			map.addLayer({
-				id: 'boundary-line',
-				type: 'line',
-				source: 'boundary',
-				paint: {
-					'line-color': '#1e5a8e',
-					'line-width': 5,
-					'line-opacity': 1
-				}
-			});
-			
-			// Add boundary line shadow for more prominence
-			map.addLayer({
-				id: 'boundary-line-shadow',
-				type: 'line',
-				source: 'boundary',
-				paint: {
-					'line-color': '#ffffff',
-					'line-width': 7,
-					'line-opacity': 0.6,
-					'line-blur': 2
-				}
-			}, 'boundary-line');
+		// Add boundary line (prominent yellow border)
+		map.addLayer({
+			id: 'boundary-line',
+			type: 'line',
+			source: 'boundary',
+			paint: {
+				'line-color': '#ffd900',
+				'line-width': 6,
+				'line-opacity': 1
+			}
+		});
+		
+		// Add boundary line shadow for more prominence
+		map.addLayer({
+			id: 'boundary-line-shadow',
+			type: 'line',
+			source: 'boundary',
+			paint: {
+				'line-color': '#ffffff',
+				'line-width': 8,
+				'line-opacity': 0.6,
+				'line-blur': 2
+			}
+		}, 'boundary-line');
 			
 			// Create inverse mask - polygon with hole for waterwegregio
 			// This will darken everything OUTSIDE the boundary
@@ -188,6 +191,43 @@
 		}
 	}
 
+	async function loadMunicipalityBoundaries() {
+		try {
+			const response = await fetch('/data/municipality_boundaries.geojson');
+			const geojson = await response.json();
+
+		// Filter out Rotterdam (GM0599) - we don't need to show its boundary
+		const filteredGeojson = {
+			type: 'FeatureCollection',
+			features: geojson.features.filter((feature: any) => 
+				feature.properties && feature.properties.code !== 'GM0599'
+			)
+		};
+
+			// Add municipality boundaries source
+			map.addSource('municipality-boundaries', {
+				type: 'geojson',
+				data: filteredGeojson
+			});
+
+		// Add municipality boundaries as subtle dotted yellow lines
+		map.addLayer({
+			id: 'municipality-boundaries',
+			type: 'line',
+			source: 'municipality-boundaries',
+			paint: {
+				'line-color': '#ffd900',
+				'line-width': 2,
+				'line-dasharray': [1, 1]
+			}
+		}, 'boundary-line'); // Place below the main boundary line
+
+			console.log('Municipality boundaries loaded (excluding Rotterdam)');
+		} catch (error) {
+			console.error('Error loading municipality boundaries:', error);
+		}
+	}
+
 	function addStoriesLayer() {
 		console.log(`🗺️ Initial stories layer setup (${stories.length} stories)`);
 		// We'll use HTML markers instead of symbol layers for reliable emoji rendering
@@ -208,14 +248,20 @@
 			const el = document.createElement('div');
 			el.className = 'story-marker-wrapper';
 			
-		// Create img element for the icon
-		const icon = document.createElement('img');
-		icon.className = story.type === 'project' ? 'story-marker-icon project-icon' : 'story-marker-icon';
-		icon.src = typeConfig.icon;
-		icon.alt = typeConfig.label;
-		// Don't set inline width/height - let CSS handle it for aspect ratio preservation
-		
-		el.appendChild(icon);
+			// Create img element for the icon
+			const icon = document.createElement('img');
+			icon.className = story.type === 'project' ? 'story-marker-icon project-icon' : 'story-marker-icon';
+			icon.src = typeConfig.icon;
+			icon.alt = typeConfig.label;
+			
+			el.appendChild(icon);
+			
+			// Add gradient overlay for project icons
+			if (story.type === 'project') {
+				const gradientOverlay = document.createElement('div');
+				gradientOverlay.className = 'project-gradient-overlay';
+				el.appendChild(gradientOverlay);
+			}
 
 			// Create marker with anchor at center
 			const marker = new maplibregl.Marker({ 
@@ -235,7 +281,9 @@
 				let popupHTML = `
 					<div class="popup-content">
 						<div class="popup-header">
-							<img src="${typeConfig.icon}" alt="${escapeHtml(typeConfig.label)}" class="popup-icon-img" />
+							<div class="popup-icon-container ${story.type === 'project' ? 'popup-icon-project' : ''}">
+								<img src="${typeConfig.icon}" alt="${escapeHtml(typeConfig.label)}" class="popup-icon-img" />
+							</div>
 							<span class="popup-type">${escapeHtml(typeConfig.label)}</span>
 						</div>
 						<p class="popup-text">${escapeHtml(story.text)}</p>
@@ -272,7 +320,7 @@
 				}
 
 				// Create and store the new popup
-				currentPopup = new maplibregl.Popup({ offset: 25 })
+				currentPopup = new maplibregl.Popup({ offset: 25, className: `popup-${story.type}` })
 					.setLngLat([story.lng, story.lat])
 					.setHTML(popupHTML)
 					.addTo(map);
@@ -393,8 +441,8 @@
 			.setLngLat([lng, lat])
 			.addTo(map);
 
-		// Create confirmation popup
-		const popup = new maplibregl.Popup({ 
+		// Create confirmation popup and store it in currentPopup
+		currentPopup = new maplibregl.Popup({ 
 			closeButton: false,
 			closeOnClick: false,
 			offset: 25
@@ -411,6 +459,15 @@
 			`)
 			.addTo(map);
 
+		// Clear the reference when popup is closed
+		currentPopup.on('close', () => {
+			currentPopup = null;
+			if (tempMarker) {
+				tempMarker.remove();
+				tempMarker = null;
+			}
+		});
+
 		// Handle confirmation
 		setTimeout(() => {
 			const confirmBtn = document.getElementById('confirm-location');
@@ -418,16 +475,19 @@
 
 			if (confirmBtn) {
 				confirmBtn.onclick = () => {
-					popup.remove();
+					if (currentPopup) currentPopup.remove();
 					if (tempMarker) tempMarker.remove();
+					currentPopup = null;
+					tempMarker = null;
 					dispatch('mapclick', { lng, lat });
 				};
 			}
 
 			if (cancelBtn) {
 				cancelBtn.onclick = () => {
-					popup.remove();
+					if (currentPopup) currentPopup.remove();
 					if (tempMarker) tempMarker.remove();
+					currentPopup = null;
 					tempMarker = null;
 				};
 			}
@@ -446,11 +506,33 @@
 	:global(.maplibregl-popup-content) {
 		padding: 0;
 		border-radius: 12px;
-		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 		min-width: 260px;
 		max-width: 320px;
 		overflow: hidden;
-		border: 2px solid #f3f4f6;
+		border: none;
+		border-left: 4px solid #1e5a8e; /* Default blue, will be overridden */
+	}
+	
+	/* Color-coded borders for different story types */
+	:global(.maplibregl-popup-content.popup-bewoner) {
+		border-left-color: #1e5a8e; /* Blue */
+	}
+	
+	:global(.maplibregl-popup-content.popup-project) {
+		border-left-color: #dc2626; /* Red/Orange */
+	}
+	
+	:global(.maplibregl-popup-content.popup-initiatief) {
+		border-left-color: #059669; /* Green */
+	}
+	
+	:global(.maplibregl-popup-content.popup-vraag) {
+		border-left-color: #ea580c; /* Orange */
+	}
+	
+	:global(.maplibregl-popup-content.popup-idee) {
+		border-left-color: #7c3aed; /* Purple */
 	}
 
 	:global(.maplibregl-popup-close-button) {
@@ -483,17 +565,54 @@
 		border-bottom: 2px solid #e5e7eb;
 	}
 
+	:global(.popup-icon-container) {
+		position: relative;
+		width: 28px;
+		height: 28px;
+		flex-shrink: 0;
+	}
+	
 	:global(.popup-icon-img) {
 		width: auto;
 		height: 28px;
 		object-fit: contain;
-		/* Navy color filter */
+		display: block;
+	}
+	
+	/* Navy blue for Verhaal Bewoner */
+	:global(.popup-icon-img[alt="Verhaal Bewoner"]) {
 		filter: brightness(0) saturate(100%) invert(28%) sepia(65%) saturate(1234%) hue-rotate(186deg) brightness(93%) contrast(88%);
 	}
 	
-	/* Toned down orange project puzzle in popup */
-	:global(.popup-icon-img[src*="projectpuzzelstuk"]) {
-		filter: brightness(0) saturate(100%) invert(55%) sepia(85%) saturate(2200%) hue-rotate(1deg) brightness(95%) contrast(98%) !important;
+	/* Green for Lokaal Initiatief */
+	:global(.popup-icon-img[alt="Lokaal Initiatief"]) {
+		filter: brightness(0) saturate(100%) invert(38%) sepia(71%) saturate(1234%) hue-rotate(130deg) brightness(95%) contrast(96%);
+	}
+	
+	/* Orange for Vraag of Behoefte */
+	:global(.popup-icon-img[alt="Vraag of Behoefte"]) {
+		filter: brightness(0) saturate(100%) invert(42%) sepia(95%) saturate(2413%) hue-rotate(1deg) brightness(99%) contrast(93%);
+	}
+	
+	/* Purple for Idee */
+	:global(.popup-icon-img[alt="Idee"]) {
+		filter: brightness(0) saturate(100%) invert(35%) sepia(93%) saturate(2718%) hue-rotate(249deg) brightness(93%) contrast(93%);
+	}
+	
+	/* Gradient for project puzzle in popup */
+	:global(.popup-icon-project) {
+		background: linear-gradient(135deg, 
+			#1e5a8e 0%, 
+			#dc2626 25%, 
+			#fbbf24 50%, 
+			#059669 75%, 
+			#7c3aed 100%);
+		mask: url('/icons/projectpuzzelstuk.PNG') center/contain no-repeat;
+		-webkit-mask: url('/icons/projectpuzzelstuk.PNG') center/contain no-repeat;
+	}
+	
+	:global(.popup-icon-project .popup-icon-img) {
+		opacity: 0;
 	}
 
 	:global(.popup-type) {
@@ -506,9 +625,13 @@
 	:global(.popup-text) {
 		margin: 0 0 12px 0;
 		font-size: 15px;
-		line-height: 1.6;
-		color: #374151;
+		line-height: 1.7;
+		color: #1f2937;
 		font-weight: 400;
+		font-style: italic;
+		position: relative;
+		padding-left: 12px;
+		border-left: 3px solid #e5e7eb;
 	}
 
 	:global(.popup-meta-section) {
@@ -619,27 +742,89 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		position: relative;
 	}
 
 	:global(.story-marker-icon) {
 		display: block;
 		width: auto;
-		height: 56px; /* Larger size */
-		object-fit: contain; /* Preserve aspect ratio */
-		transition: transform 0.2s ease;
+		height: 56px;
+		object-fit: contain;
+		transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), filter 0.25s ease;
 		transform-origin: center center;
-		/* Navy color filter + white glow for visibility */
+	}
+	
+	/* Navy blue for Verhaal Bewoner */
+	:global(.story-marker-icon[alt="Verhaal Bewoner"]) {
 		filter: brightness(0) saturate(100%) invert(28%) sepia(65%) saturate(1234%) hue-rotate(186deg) brightness(93%) contrast(88%) drop-shadow(0 0 3px white) drop-shadow(0 0 6px white);
 	}
 	
+	/* Green for Lokaal Initiatief */
+	:global(.story-marker-icon[alt="Lokaal Initiatief"]) {
+		filter: brightness(0) saturate(100%) invert(38%) sepia(71%) saturate(1234%) hue-rotate(130deg) brightness(95%) contrast(96%) drop-shadow(0 0 3px white) drop-shadow(0 0 6px white);
+	}
+	
+	/* Orange for Vraag of Behoefte */
+	:global(.story-marker-icon[alt="Vraag of Behoefte"]) {
+		filter: brightness(0) saturate(100%) invert(42%) sepia(95%) saturate(2413%) hue-rotate(1deg) brightness(99%) contrast(93%) drop-shadow(0 0 3px white) drop-shadow(0 0 6px white);
+	}
+	
+	/* Purple for Idee */
+	:global(.story-marker-icon[alt="Idee"]) {
+		filter: brightness(0) saturate(100%) invert(35%) sepia(93%) saturate(2718%) hue-rotate(249deg) brightness(93%) contrast(93%) drop-shadow(0 0 3px white) drop-shadow(0 0 6px white);
+	}
+	
 	:global(.story-marker-icon.project-icon) {
-		height: 72px; /* Even larger for project pins */
-		/* Toned down orange puzzle piece */
-		filter: brightness(0) saturate(100%) invert(55%) sepia(85%) saturate(2200%) hue-rotate(1deg) brightness(95%) contrast(98%) drop-shadow(0 0 4px white) drop-shadow(0 0 6px rgba(255, 140, 0, 0.4)) !important;
+		height: 110px;
+		opacity: 0;
+		filter: none !important;
+	}
+	
+	/* Gradient overlay for project puzzle pieces */
+	:global(.project-gradient-overlay) {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 110px;
+		height: 110px;
+		background: linear-gradient(135deg, 
+			#1e5a8e 0%, 
+			#dc2626 25%, 
+			#fbbf24 50%, 
+			#059669 75%, 
+			#7c3aed 100%);
+		mask: url('/icons/projectpuzzelstuk.PNG') center/contain no-repeat;
+		-webkit-mask: url('/icons/projectpuzzelstuk.PNG') center/contain no-repeat;
+		pointer-events: none;
+		filter: drop-shadow(0 0 4px white) drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
+		transition: filter 0.25s ease, transform 0.25s ease;
 	}
 
 	:global(.story-marker-wrapper:hover .story-marker-icon) {
-		transform: scale(1.2);
+		transform: scale(1.15);
+	}
+	
+	/* Enhanced hover effects per type */
+	:global(.story-marker-wrapper:hover .story-marker-icon[alt="Verhaal Bewoner"]) {
+		filter: brightness(0) saturate(100%) invert(28%) sepia(65%) saturate(1234%) hue-rotate(186deg) brightness(93%) contrast(88%) drop-shadow(0 0 4px white) drop-shadow(0 0 10px rgba(30, 90, 142, 0.5));
+	}
+	
+	:global(.story-marker-wrapper:hover .story-marker-icon[alt="Lokaal Initiatief"]) {
+		filter: brightness(0) saturate(100%) invert(38%) sepia(71%) saturate(1234%) hue-rotate(130deg) brightness(95%) contrast(96%) drop-shadow(0 0 4px white) drop-shadow(0 0 10px rgba(5, 150, 105, 0.5));
+	}
+	
+	:global(.story-marker-wrapper:hover .story-marker-icon[alt="Vraag of Behoefte"]) {
+		filter: brightness(0) saturate(100%) invert(42%) sepia(95%) saturate(2413%) hue-rotate(1deg) brightness(99%) contrast(93%) drop-shadow(0 0 4px white) drop-shadow(0 0 10px rgba(234, 88, 12, 0.5));
+	}
+	
+	:global(.story-marker-wrapper:hover .story-marker-icon[alt="Idee"]) {
+		filter: brightness(0) saturate(100%) invert(35%) sepia(93%) saturate(2718%) hue-rotate(249deg) brightness(93%) contrast(93%) drop-shadow(0 0 4px white) drop-shadow(0 0 10px rgba(124, 58, 237, 0.5));
+	}
+	
+	:global(.story-marker-wrapper:hover .project-gradient-overlay) {
+		transform: translate(-50%, -50%) scale(1.15);
+		filter: drop-shadow(0 0 6px white) drop-shadow(0 0 12px rgba(255, 193, 7, 0.6)) drop-shadow(0 0 16px rgba(30, 90, 142, 0.4));
 	}
 </style>
 
