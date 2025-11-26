@@ -248,7 +248,7 @@
 			
 			// Create marker element wrapper
 			const el = document.createElement('div');
-			el.className = 'story-marker-wrapper';
+			el.className = story.type === 'project' ? 'story-marker-wrapper project-wrapper' : 'story-marker-wrapper';
 			
 			// Create img element for the icon
 			const icon = document.createElement('img');
@@ -745,6 +745,13 @@
 		align-items: center;
 		justify-content: center;
 		position: relative;
+		width: 56px;
+		height: 56px;
+	}
+
+	:global(.story-marker-wrapper.project-wrapper) {
+		width: 110px;
+		height: 110px;
 	}
 
 	:global(.story-marker-icon) {
@@ -777,17 +784,20 @@
 	}
 	
 	:global(.story-marker-icon.project-icon) {
+		width: 110px;
 		height: 110px;
 		opacity: 0;
 		filter: none !important;
+		position: absolute;
+		top: 0;
+		left: 0;
 	}
 	
 	/* Gradient overlay for project puzzle pieces */
 	:global(.project-gradient-overlay) {
 		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
+		top: 0;
+		left: 0;
 		width: 110px;
 		height: 110px;
 		background: linear-gradient(135deg, 
@@ -800,7 +810,7 @@
 		-webkit-mask: url('/icons/projectpuzzelstuk.PNG') center/contain no-repeat;
 		pointer-events: none;
 		filter: drop-shadow(0 0 4px white) drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
-		transition: filter 0.25s ease, transform 0.25s ease;
+		transition: filter 0.25s ease;
 	}
 
 	:global(.story-marker-wrapper:hover .story-marker-icon) {
@@ -825,7 +835,6 @@
 	}
 	
 	:global(.story-marker-wrapper:hover .project-gradient-overlay) {
-		transform: translate(-50%, -50%) scale(1.15);
 		filter: drop-shadow(0 0 6px white) drop-shadow(0 0 12px rgba(255, 193, 7, 0.6)) drop-shadow(0 0 16px rgba(30, 90, 142, 0.4));
 	}
 </style>
