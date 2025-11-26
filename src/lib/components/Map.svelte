@@ -16,10 +16,12 @@
 	let storiesLayerAdded = false;
 	let storyMarkers: maplibregl.Marker[] = [];
 	let currentPopup: maplibregl.Popup | null = null;
+	let markersRendered = false;
 
-	// Watch for story changes and re-render markers
-	$: if (map && storiesLayerAdded && stories) {
+	// Only render markers once when both map and stories are ready
+	$: if (map && storiesLayerAdded && stories.length > 0 && !markersRendered) {
 		renderStoryMarkers();
+		markersRendered = true;
 	}
 
 	onMount(async () => {
@@ -339,7 +341,7 @@
 
 	export function refreshStories(newStories: StoryWithCoords[]) {
 		stories = newStories;
-		renderStoryMarkers();
+		markersRendered = false; // Allow re-render with new stories
 	}
 
 	function escapeHtml(text: string): string {
