@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { supabase, storyTypes } from '$lib/supabase';
 	import type { StoryWithCoords } from '$lib/supabase';
+	import { adminStore } from '$lib/stores/adminStore';
 
 	let isAuthenticated = false;
 	let password = '';
@@ -10,15 +11,14 @@
 	let loading = true;
 	let searchTerm = '';
 
-	// Simple client-side password check for MVP
-	// In production, use proper server-side authentication
-	const ADMIN_PASSWORD = 'resilientdelta2025';
+	// Subscribe to admin store
+	adminStore.subscribe(value => {
+		isAuthenticated = value;
+	});
 
 	onMount(async () => {
-		// Check if already authenticated in session
-		const auth = sessionStorage.getItem('admin_auth');
-		if (auth === 'true') {
-			isAuthenticated = true;
+		// Check if already authenticated via store
+		if (isAuthenticated) {
 			await loadStories();
 		} else {
 			loading = false;
@@ -26,9 +26,7 @@
 	});
 
 	async function handleLogin() {
-		if (password === ADMIN_PASSWORD) {
-			isAuthenticated = true;
-			sessionStorage.setItem('admin_auth', 'true');
+		if (adminStore.login(password)) {
 			loginError = '';
 			await loadStories();
 		} else {
@@ -91,8 +89,7 @@
 	}
 
 	function handleLogout() {
-		sessionStorage.removeItem('admin_auth');
-		isAuthenticated = false;
+		adminStore.logout();
 		password = '';
 		stories = [];
 	}

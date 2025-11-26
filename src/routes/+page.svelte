@@ -6,6 +6,7 @@
 	import { supabase } from '$lib/supabase';
 	import type { StoryWithCoords } from '$lib/supabase';
 	import { toastStore } from '$lib/stores/toastStore';
+	import { adminStore } from '$lib/stores/adminStore';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 
 	let stories: StoryWithCoords[] = [];
@@ -17,20 +18,23 @@
 	let showBoundaryWarning = false;
 	let isAdmin = false;
 
-	// Admin password (in production, use environment variable)
-	const ADMIN_PASSWORD = 'waterwegregio2024';
+	// Subscribe to admin store
+	adminStore.subscribe(value => {
+		isAdmin = value;
+	});
 
 	function toggleAdmin() {
 		if (isAdmin) {
-			isAdmin = false;
+			adminStore.logout();
 			toastStore.show('Admin modus uitgeschakeld', 'info');
 		} else {
 			const password = prompt('Voer admin wachtwoord in:');
-			if (password === ADMIN_PASSWORD) {
-				isAdmin = true;
-				toastStore.show('Admin modus ingeschakeld', 'success');
-			} else if (password !== null) {
-				toastStore.show('Onjuist wachtwoord', 'error');
+			if (password !== null) {
+				if (adminStore.login(password)) {
+					toastStore.show('Admin modus ingeschakeld', 'success');
+				} else {
+					toastStore.show('Onjuist wachtwoord', 'error');
+				}
 			}
 		}
 	}
@@ -135,6 +139,13 @@
 		<button class="admin-toggle" on:click={toggleAdmin} class:active={isAdmin} title={isAdmin ? 'Admin modus' : 'Admin login'}>
 			🔑
 		</button>
+
+		<!-- Admin Panel Link (only visible when logged in) -->
+		{#if isAdmin}
+			<a href="/admin" class="admin-panel-link" title="Beheer verhalen">
+				⚙️
+			</a>
+		{/if}
 	</main>
 
 	<SubmissionModal
@@ -320,6 +331,32 @@
 		box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
 	}
 
+	.admin-panel-link {
+		position: absolute;
+		top: 20px;
+		right: 120px;
+		z-index: 10;
+		background: white;
+		border: 2px solid #e5e7eb;
+		border-radius: 8px;
+		width: 40px;
+		height: 40px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 20px;
+		text-decoration: none;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	}
+
+	.admin-panel-link:hover {
+		background: #f3f4f6;
+		transform: scale(1.05);
+		border-color: #1e5a8e;
+	}
+
 	@media (max-width: 768px) {
 		.map-title {
 			top: 20px;
@@ -361,6 +398,14 @@
 
 		.admin-toggle {
 			top: 10px;
+			right: 10px;
+			width: 36px;
+			height: 36px;
+			font-size: 18px;
+		}
+
+		.admin-panel-link {
+			top: 56px;
 			right: 10px;
 			width: 36px;
 			height: 36px;
