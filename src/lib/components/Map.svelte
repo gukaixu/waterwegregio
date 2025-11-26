@@ -14,14 +14,14 @@
 	let boundaryGeojson: any = null;
 	let tempMarker: maplibregl.Marker | null = null;
 	let storiesLayerAdded = false;
-	let storyMarkers: maplibregl.Marker[] = [];
+	let storyMarkers: Map<string, maplibregl.Marker> = new Map(); // Track markers by story ID
 	let currentPopup: maplibregl.Popup | null = null;
-	let markersRendered = false;
+	let markersInitialized = false;
 
-	// Only render markers once when both map and stories are ready
-	$: if (map && storiesLayerAdded && stories.length > 0 && !markersRendered) {
-		renderStoryMarkers();
-		markersRendered = true;
+	// Update markers when stories change (incremental updates)
+	$: if (map && storiesLayerAdded && stories.length > 0) {
+		updateMarkers();
+		markersInitialized = true;
 	}
 
 	onMount(async () => {
@@ -235,112 +235,131 @@
 		// We'll use HTML markers instead of symbol layers for reliable emoji rendering
 	}
 
-	function renderStoryMarkers() {
-		console.log(`🔄 Rendering ${stories.length} story markers`);
+	// Incremental marker update - only add new markers, don't touch existing ones
+	function updateMarkers() {
+		const currentStoryIds = new Set(stories.map(s => s.id));
+		const existingMarkerIds = new Set(storyMarkers.keys());
 		
-		// Remove existing markers
-		storyMarkers.forEach(marker => marker.remove());
-		storyMarkers = [];
+		// Remove markers for deleted stories only
+		for (const id of existingMarkerIds) {
+			if (!currentStoryIds.has(id)) {
+				console.log(`🗑️ Removing marker for deleted story: ${id}`);
+				storyMarkers.get(id)?.remove();
+				storyMarkers.delete(id);
+			}
+		}
+		
+		// Add markers for new stories only (existing markers stay untouched)
+		let newMarkersAdded = 0;
+		for (const story of stories) {
+			if (!storyMarkers.has(story.id)) {
+				const marker = createMarkerForStory(story);
+				storyMarkers.set(story.id, marker);
+				newMarkersAdded++;
+			}
+		}
+		
+		if (newMarkersAdded > 0) {
+			console.log(`✅ Added ${newMarkersAdded} new marker(s). Total: ${storyMarkers.size}`);
+		}
+	}
 
-		// Create new markers for each story
-		stories.forEach((story) => {
-			const typeConfig = storyTypes[story.type] || storyTypes.bewoner;
-			
-			// Create marker element wrapper
-			const el = document.createElement('div');
-			el.className = story.type === 'project' ? 'story-marker-wrapper project-wrapper' : 'story-marker-wrapper';
-			
-			if (story.type === 'project') {
-				// For project markers, use a simpler single-element approach
-				const gradientIcon = document.createElement('div');
-				gradientIcon.className = 'project-gradient-icon';
-				el.appendChild(gradientIcon);
-			} else {
-				// Regular markers use img element
-				const icon = document.createElement('img');
-				icon.className = 'story-marker-icon';
-				icon.src = typeConfig.icon;
-				icon.alt = typeConfig.label;
-				el.appendChild(icon);
+	// Create a single marker for a story
+	function createMarkerForStory(story: StoryWithCoords): maplibregl.Marker {
+		const typeConfig = storyTypes[story.type] || storyTypes.bewoner;
+		
+		// Create marker element wrapper
+		const el = document.createElement('div');
+		el.className = story.type === 'project' ? 'story-marker-wrapper project-wrapper' : 'story-marker-wrapper';
+		
+		if (story.type === 'project') {
+			// For project markers, use a simpler single-element approach
+			const gradientIcon = document.createElement('div');
+			gradientIcon.className = 'project-gradient-icon';
+			el.appendChild(gradientIcon);
+		} else {
+			// Regular markers use img element
+			const icon = document.createElement('img');
+			icon.className = 'story-marker-icon';
+			icon.src = typeConfig.icon;
+			icon.alt = typeConfig.label;
+			el.appendChild(icon);
+		}
+
+		// Create marker with anchor at center
+		const marker = new maplibregl.Marker({ 
+			element: el,
+			anchor: 'center'
+		})
+			.setLngLat([story.lng, story.lat])
+			.addTo(map);
+
+		// Add click handler for popup
+		el.addEventListener('click', (e) => {
+			e.stopPropagation();
+			const created = story.created_at
+				? new Date(story.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+				: '';
+
+			let popupHTML = `
+				<div class="popup-content">
+					<div class="popup-header">
+						<div class="popup-icon-container ${story.type === 'project' ? 'popup-icon-project' : ''}">
+							<img src="${typeConfig.icon}" alt="${escapeHtml(typeConfig.label)}" class="popup-icon-img" />
+						</div>
+						<span class="popup-type">${escapeHtml(typeConfig.label)}</span>
+					</div>
+					<p class="popup-text">${escapeHtml(story.text)}</p>
+			`;
+
+			// Add optional fields in a cleaner format
+			const metaFields = [];
+			if (story.organisatie) {
+				metaFields.push(`<div class="popup-meta-item"><span class="popup-meta-label">Organisatie</span><span class="popup-meta-value">${escapeHtml(story.organisatie)}</span></div>`);
+			}
+			if (story.naam) {
+				metaFields.push(`<div class="popup-meta-item"><span class="popup-meta-label">Naam</span><span class="popup-meta-value">${escapeHtml(story.naam)}</span></div>`);
+			}
+			if (story.link) {
+				const fullUrl = story.link.startsWith('http://') || story.link.startsWith('https://') 
+					? story.link 
+					: 'https://' + story.link;
+				metaFields.push(`<div class="popup-meta-item"><span class="popup-meta-label">Link</span><a href="${escapeHtml(fullUrl)}" target="_blank" rel="noopener noreferrer" class="popup-meta-link">${escapeHtml(story.link)}</a></div>`);
 			}
 
-			// Create marker with anchor at center
-			const marker = new maplibregl.Marker({ 
-				element: el,
-				anchor: 'center'
-			})
+			if (metaFields.length > 0) {
+				popupHTML += `<div class="popup-meta-section">${metaFields.join('')}</div>`;
+			}
+
+			if (created) {
+				popupHTML += `<div class="popup-date">📅 ${created}</div>`;
+			}
+
+			popupHTML += `</div>`;
+
+			// Close any existing popup before opening a new one
+			if (currentPopup) {
+				currentPopup.remove();
+			}
+
+			// Create and store the new popup
+			currentPopup = new maplibregl.Popup({ offset: 25, className: `popup-${story.type}` })
 				.setLngLat([story.lng, story.lat])
+				.setHTML(popupHTML)
 				.addTo(map);
-
-			// Add click handler for popup
-			el.addEventListener('click', (e) => {
-				e.stopPropagation();
-				const created = story.created_at
-					? new Date(story.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
-					: '';
-
-				let popupHTML = `
-					<div class="popup-content">
-						<div class="popup-header">
-							<div class="popup-icon-container ${story.type === 'project' ? 'popup-icon-project' : ''}">
-								<img src="${typeConfig.icon}" alt="${escapeHtml(typeConfig.label)}" class="popup-icon-img" />
-							</div>
-							<span class="popup-type">${escapeHtml(typeConfig.label)}</span>
-						</div>
-						<p class="popup-text">${escapeHtml(story.text)}</p>
-				`;
-
-				// Add optional fields in a cleaner format
-				const metaFields = [];
-				if (story.organisatie) {
-					metaFields.push(`<div class="popup-meta-item"><span class="popup-meta-label">Organisatie</span><span class="popup-meta-value">${escapeHtml(story.organisatie)}</span></div>`);
-				}
-				if (story.naam) {
-					metaFields.push(`<div class="popup-meta-item"><span class="popup-meta-label">Naam</span><span class="popup-meta-value">${escapeHtml(story.naam)}</span></div>`);
-				}
-				if (story.link) {
-					const fullUrl = story.link.startsWith('http://') || story.link.startsWith('https://') 
-						? story.link 
-						: 'https://' + story.link;
-					metaFields.push(`<div class="popup-meta-item"><span class="popup-meta-label">Link</span><a href="${escapeHtml(fullUrl)}" target="_blank" rel="noopener noreferrer" class="popup-meta-link">${escapeHtml(story.link)}</a></div>`);
-				}
-
-				if (metaFields.length > 0) {
-					popupHTML += `<div class="popup-meta-section">${metaFields.join('')}</div>`;
-				}
-
-				if (created) {
-					popupHTML += `<div class="popup-date">📅 ${created}</div>`;
-				}
-
-				popupHTML += `</div>`;
-
-				// Close any existing popup before opening a new one
-				if (currentPopup) {
-					currentPopup.remove();
-				}
-
-				// Create and store the new popup
-				currentPopup = new maplibregl.Popup({ offset: 25, className: `popup-${story.type}` })
-					.setLngLat([story.lng, story.lat])
-					.setHTML(popupHTML)
-					.addTo(map);
-				
-				// Clear the reference when popup is closed
-				currentPopup.on('close', () => {
-					currentPopup = null;
-				});
+			
+			// Clear the reference when popup is closed
+			currentPopup.on('close', () => {
+				currentPopup = null;
 			});
-
-			storyMarkers.push(marker);
 		});
 
-		console.log(`✅ Rendered ${storyMarkers.length} markers on map`);
+		return marker;
 	}
 
 	export function refreshStories(newStories: StoryWithCoords[]) {
 		stories = newStories;
-		markersRendered = false; // Allow re-render with new stories
+		// The reactive statement will call updateMarkers() which does incremental updates
 	}
 
 	function escapeHtml(text: string): string {
