@@ -226,6 +226,7 @@
 		font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
 			Arial, sans-serif;
 		background: #f9fafb;
+		overflow: auto;
 	}
 
 	.admin-page {
